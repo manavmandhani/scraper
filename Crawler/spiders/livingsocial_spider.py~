@@ -1,0 +1,34 @@
+from scrapy.spider import BaseSpider
+from scrapy.selector import HtmlXPathSelector
+from scrapy.contrib.loader import XPathItemLoader
+from scrapy.http import Request
+
+
+from azulcrawler.items import DealsItem
+
+import urlparse
+import re
+
+
+class RestaurantSpider(BaseSpider):
+    name = 'livingcrawl'
+    allowed_domains = ['livingsocial.com']
+    start_urls = ['https://www.livingsocial.com/cities/18-austin']
+
+    def parse(self, response):
+        hxs = HtmlXPathSelector(response)
+        deal_list = hxs.select('//div[@class = "deal-bottom"]/ul/li/a/@href').extract()
+        for deal in deal_list:
+            yield Request(deal, callback = self.parse_page)
+
+    def parse_page(self, response):
+        l = XPathItemLoader(item = DealsItem(), response=response)
+        l.add_xpath('name', '//h1[@id = "deal_merchant_display_name"]/text()')
+        l.add_xpath('description', '//h2[@id = "option_title_for_deal"]/text()')
+        l.add_xpath('price', '//li[@id = "deal-buy-box-price"]/text()')
+        l.add_xpath('discount', '//ul[@id = "stats_deal_list"]/li/div/text()')
+        l.add_xpath('discount', '//ul[@id = "stats_deal_list"]/li/label/text()')
+        l.add_xpath('details', '//div[@id="view-details-full"]/p/text()')
+        l.add_xpath('address', '//span[@class = "street_1"]/text()')
+        l.add_xpath('number', '//span[@class = "phone"]/text()')
+        return l.load_item()

@@ -1,0 +1,32 @@
+from scrapy.spider import BaseSpider
+from scrapy.selector import HtmlXPathSelector
+from scrapy.contrib.loader import XPathItemLoader
+from scrapy.http import Request
+
+
+from azulcrawler.items import AzulcrawlerItem
+
+import urlparse
+import re
+
+
+class RestaurantSpider(BaseSpider):
+    name = 'urbancrawl'
+    allowed_domains = ['urbanspoon.com']
+    start_urls = ['http://www.urbanspoon.com/r/11/141533/restaurant/Downtown/Moonshine-Patio-Bar-Grill-Austin']
+
+    def parse(self, response):
+        l = XPathItemLoader(item = AzulcrawlerItem(), response=response)
+        l.add_xpath('name', '//h1/text()')
+        l.add_xpath('number', '//h3[@class = "phone tel"]/text()')
+        l.add_xpath('categories', '//a[@data-ga_action = "explore-resto-cuisinitemprope"]/text()')
+        l.add_xpath('address', '//span[@class="street-address"]/text()')
+        l.add_xpath('address', '//span[@class="locality"]/text()')
+        l.add_xpath('address', '//span[@class="region"]/text()')
+        #l.add_xpath('address', '//div[@class = "address"/a/text()')
+        l.add_xpath('rating', '//div[@class="average digits percent-text-rating"]/text()')
+        l.add_xpath('rating', '//div[@class="percent"]/text()')
+        l.add_xpath('rating', '//div[@class="total num-votes"]/text()')
+        l.add_xpath('price_range', '//span[@class="price"]/text()')
+        #l.add_xpath('url', '//a[@class = "icon website ga_event"]/@href()')
+        return l.load_item()

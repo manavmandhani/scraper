@@ -1,0 +1,27 @@
+from scrapy.spider import BaseSpider
+from scrapy.selector import HtmlXPathSelector
+from scrapy.contrib.loader import XPathItemLoader
+from scrapy.http import Request
+
+
+from azulcrawler.items import AzulcrawlerItem
+
+import urlparse
+import re
+
+
+class RestaurantSpider(BaseSpider):
+    name = 'tripcrawl'
+    allowed_domains = ['tripadvisor.com']
+    start_urls = ['http://www.tripadvisor.com/Restaurant_Review-g30196-d1899234-Reviews-Franklin_Barbecue-Austin_Texas.html']
+
+    def parse(self, response):
+        l = XPathItemLoader(item = AzulcrawlerItem(), response=response)
+        l.add_xpath('name', '//span[@class = "sprite-pinHeader pName hvrIE6 js_mapHome"]/text()')
+        l.add_xpath('number', '//div[@class = "fl"]/text()')
+        l.add_xpath('categories', '//div[@class = "detail"]/text()')
+        l.add_xpath('address', '//div[@class="addr"]/span/text()')
+        l.add_xpath('rating', '//div[@class="colTitle"]/b/text()')
+        #l.add_xpath('price_range', '//span[@class="price"]/a/text()')
+        #l.add_xpath('url', '//a[@class = "icon website ga_event"]/@href()')
+        return l.load_item()

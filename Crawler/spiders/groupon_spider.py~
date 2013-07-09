@@ -1,0 +1,39 @@
+from scrapy.spider import BaseSpider
+from scrapy.selector import HtmlXPathSelector
+from scrapy.contrib.loader import XPathItemLoader
+from scrapy.http import Request
+
+
+from azulcrawler.items import DealsItem
+
+import urlparse
+import re
+
+
+class RestaurantSpider(BaseSpider):
+    name = 'grouponcrawl'
+    allowed_domains = ['groupon.com']
+    start_urls = ['http://www.groupon.com/deals/congress-avenue-kayak-1', 'http://www.groupon.com/deals/roll-on-sushi-diner-austin']
+
+    def parse(self, response):
+        f = open('groupon_portland_deal_list', 'r')
+        page = f.read()
+        page_list = page.split()
+        for page in page_list[900:]:
+            yield Request(urlparse.urljoin('http://groupon.com', page), callback = self.parse_page)
+    
+    def parse_page(self, response):
+        l = XPathItemLoader(item = DealsItem(), response=response)
+        l.add_xpath('name', '//h2/a/text()')
+        l.add_xpath('description', '//h3/span/text()')
+        l.add_xpath('price', '//span[@class = "price"]/text()')
+        l.add_xpath('value', '//div[@id = "deal_discount"]/dl/dd[@id="discount_details_value"]/text()')
+        l.add_xpath('discount', '//div[@id = "deal_discount"]/dl/dd[@id="discount_details_discount"]/text()')
+        l.add_xpath('saving', '//div[@id = "deal_discount"]/dl/dd[@id="discount_details_you_save"]/text()')
+        l.add_xpath('details', '//div[@class="brief_summary"]/p/text()')
+        l.add_xpath('options', '//div[@class = "pitch_content"]/ul/li/text()')
+        l.add_xpath('address', '//div[@class = "address"]/h4/text()')
+        l.add_xpath('address', '//div[@class = "address"]/p/text()')
+        l.add_xpath('address', '//div[@class = "address"]/p/span/text()')
+        l.add_xpath('address', '//div[@class = "address"]/span/text()')
+        return l.load_item()
